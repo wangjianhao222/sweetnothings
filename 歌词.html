@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>歌词生成器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 可以添加一些自定义样式 */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* 浅蓝色背景 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff; /* 白色背景 */
+            padding: 30px;
+            border-radius: 12px; /* 圆角 */
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); /* 阴影 */
+            max-width: 700px;
+            width: 100%;
+        }
+        textarea {
+            min-height: 400px; /* 进一步增加文本区域高度 */
+            resize: vertical; /* 允许垂直调整大小 */
+        }
+        button {
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #4361ee; /* 悬停时的深蓝色 */
+        }
+        .button-group {
+            display: flex;
+            gap: 10px; /* 按钮之间的间距 */
+            justify-content: center;
+            flex-wrap: wrap; /* 允许按钮换行 */
+        }
+        .button-group button {
+             flex-grow: 1; /* 让按钮在需要时填充空间 */
+             min-width: 120px; /* 最小宽度 */
+        }
+        .clear-button {
+             background-color: #6b7280; /* 灰色背景 */
+             hover:bg-gray-700; /* 悬停时深灰色 */
+        }
+         .copy-button {
+             background-color: #10b981; /* 绿色背景 */
+             hover:bg-emerald-700; /* 悬停时深绿色 */
+        }
+        .option-group {
+            display: flex;
+            align-items: center;
+            gap: 20px; /* 选项之间的间距 */
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+         .option-group label {
+            margin-bottom: 0; /* 移除 label 默认的下边距 */
+         }
+    </style>
+</head>
+<body>
+
+<div class="container mx-auto">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">歌词生成器</h1>
+
+    <div class="mb-4">
+        <label for="keywords" class="block text-gray-700 text-sm font-bold mb-2">输入关键词或想法（用逗号、顿号或空格分隔）：</label>
+        <textarea id="keywords" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="例如：小星星、糖果、微笑、晴天、猫咪、彩虹、泡泡、微风、花朵、秘密、冒险、阳光、月亮、约定、小狗、金鱼、蝴蝶"></textarea>
+    </div>
+
+    <div class="option-group">
+        <label for="language" class="block text-gray-700 text-sm font-bold">选择语言：</label>
+        <select id="language" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+        </select>
+
+        <label for="length" class="block text-gray-700 text-sm font-bold">歌词长度：</label>
+        <select id="length" class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <option value="short">短</option>
+            <option value="medium">中</option>
+            <option value="long">长</option>
+        </select>
+    </div>
+
+
+    <div class="button-group mb-6">
+        <button onclick="generateLyrics()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            生成歌词
+        </button>
+         <button onclick="clearLyrics()" class="clear-button text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            清空歌词
+        </button>
+         <button onclick="copyLyrics()" class="copy-button text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            复制歌词
+        </button>
+    </div>
+
+
+    <div>
+        <label for="lyricsOutput" class="block text-gray-700 text-sm font-bold mb-2">生成的歌词：</label>
+        <textarea id="lyricsOutput" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" readonly placeholder="生成的歌词将显示在这里..."></textarea>
+    </div>
+</div>
+
+<script>
+    // 歌词生成逻辑
+    function generateLyrics() {
+        const keywordsInput = document.getElementById('keywords');
+        const languageSelect = document.getElementById('language');
+        const lengthSelect = document.getElementById('length'); // 获取长度选择
+        const lyricsOutput = document.getElementById('lyricsOutput');
+
+        const keywords = keywordsInput.value.trim();
+        const language = languageSelect.value; // 获取选择的语言
+        const length = lengthSelect.value; // 获取选择的长度
+
+        if (!keywords) {
+            lyricsOutput.value = "请输入一些关键词或想法来生成歌词。";
+            return;
+        }
+
+        let generatedText = "";
+        // 按逗号、顿号、空格分割关键词，并过滤掉空字符串
+        const keywordList = keywords.split(/[,，、\s]+/).filter(word => word.length > 0);
+
+        // 歌词模板片段库
+        const lyricTemplates = {
+            zh: {
+                verse: [
+                    `小小的${getKeyword(keywordList, 0, '心愿', language)}，在风中摇曳。`,
+                    `像一颗${getKeyword(keywordList, 1, '糖果')}，融化在嘴里，甜到心里。`,
+                    `你的${getKeyword(keywordList, 2, '微笑')}，是治愈一切的魔法。`,
+                    `轻轻地，${getKeyword(keywordList, 3, '微风')}带来远方的故事。`,
+                    `带来${getKeyword(keywordList, 4, '花朵')}的芬芳，弥漫在空气里。`,
+                    `看，那${getKeyword(keywordList, 5, '彩虹')}跨越天空，连接着梦和现实。`,
+                    `像${getKeyword(keywordList, 6, '泡泡')}一样，载着小小的愿望，轻轻飘向远方。`,
+                    `每个${getKeyword(keywordList, 7, '晴天')}，都想和你分享阳光。`,
+                    `听，${getKeyword(keywordList, 8, '鸟儿')}在枝头歌唱，唱着幸福的旋律。`,
+                    `心中藏着小小的${getKeyword(keywordList, 9, '秘密')}，只对你讲。`,
+                    `一起踏上${getKeyword(keywordList, 10, '冒险')}的旅途，去探索未知的风景。`,
+                    `收集${getKeyword(keywordList, 11, '阳光')}和${getKeyword(keywordList, 12, '月光')}，装满小小的行囊。`,
+                    `我们之间有个小小的${getKeyword(keywordList, 13, '约定')}，不会忘记。`,
+                    `在${getKeyword(keywordList, 14, '星空')}下，许下最美的愿望。`,
+                    `可爱的小${getKeyword(keywordList, 15, '猫咪')}，在我脚边轻轻蹭。`,
+                    `摇着尾巴的${getKeyword(keywordList, 16, '小狗')}，带来满满的快乐。`,
+                    `池塘里，${getKeyword(keywordList, 17, '金鱼')}游来游去，闪闪发光。`,
+                    `美丽的${getKeyword(keywordList, 18, '蝴蝶')}，在花丛中翩翩起舞。`,
+                    `像${getKeyword(keywordList, 19, '小兔子')}一样跳跃，充满活力。`,
+                    `${getKeyword(keywordList, 20, '小松鼠')}在树上爬高高，寻找它的宝藏。`,
+                ],
+                chorus: [
+                    `手牵手，走向远方，不怕风雨，因为我们在一起。`,
+                    `我们的故事，未完待续，像${getKeyword(keywordList, 8, '小星星')}一样，永远闪亮。`,
+                    `因为有你，在我身旁，就是最美的风景，胜过所有诗句。`,
+                    `这是我们的旋律，简单而甜蜜，唱给全世界听。`,
+                    `像${getKeyword(keywordList, 15, '小猫咪')}一样依偎，感受彼此的温暖。`,
+                    `像${getKeyword(keywordList, 8, '小鸟')}一样自由飞翔，无忧无虑。`,
+                ],
+                bridge: [
+                    `也许会有迷失的时候，但只要看到你的眼睛。`,
+                    `所有的不安都消失无踪，重新充满勇气。`,
+                    `那些曾经的${getKeyword(keywordList, 9, '秘密')}，现在都变成了美好的回忆。`,
+                    `感谢命运让我们相遇，创造了这段奇迹。`,
+                    `像${getKeyword(keywordList, 16, '小狗')}一样忠诚，守护着我们的友谊。`,
+                    `追逐着像${getKeyword(keywordList, 18, '蝴蝶')}一样的梦想，不放弃。`,
+                ],
+                outro: [
+                    `永远，永远，在一起。`,
+                    `直到世界的尽头，也不分离。`,
+                    `我们的歌，会一直唱下去。`,
+                    `带着爱和${getKeyword(keywordList, 10, '冒险')}的勇气。`,
+                    `像${getKeyword(keywordList, 20, '小松鼠')}一样，收集每一个幸福的瞬间。`,
+                ]
+            },
+            en: {
+                 verse: [
+                    `A tiny ${getKeyword(keywordList, 0, 'wish', language)}, swaying in the breeze.`,
+                    `Like a piece of ${getKeyword(keywordList, 1, 'candy', language)}, melting in my mouth, sweet to my heart.`,
+                    `Your ${getKeyword(keywordList, 2, 'smile', language)}, is the magic that heals everything.`,
+                    `Gently, the ${getKeyword(keywordList, 3, 'breeze', language)} brings stories from afar.`,
+                    `Bringing the scent of ${getKeyword(keywordList, 4, 'flowers', language)}, filling the air.`,
+                    `Look, the ${getKeyword(keywordList, 5, 'rainbow', language)} spans the sky, connecting dreams and reality.`,
+                    `Like ${getKeyword(keywordList, 6, 'bubbles', language)}, carrying tiny wishes, floating gently far away.`,
+                    `Every ${getKeyword(keywordList, 7, 'sunny day', language)}, I want to share the sunshine with you.`,
+                    `Listen, the ${getKeyword(keywordList, 8, 'birds', language)} are singing on the branches, singing our melody.`,
+                    `Keeping a little ${getKeyword(keywordList, 9, 'secret', language)} in my heart, telling only you when night falls.`,
+                    `Embarking on an ${getKeyword(keywordList, 10, 'adventure', language)} together, to explore the unknown scenery.`,
+                    `Collecting ${getKeyword(keywordList, 11, 'sunshine', language)} and ${getKeyword(keywordList, 12, 'moonlight', language)}, filling our little bags.`,
+                    `We have a little ${getKeyword(keywordList, 13, 'promise', language)} between us, never to forget.`,
+                    `Under the ${getKeyword(keywordList, 14, 'starlit sky', language)}, making the most beautiful wish.`,
+                    `The cute little ${getKeyword(keywordList, 15, 'kitten')}, rubbing gently against my leg.`,
+                    `The tail-wagging ${getKeyword(keywordList, 16, 'puppy')}, brings so much joy.`,
+                    `In the pond, the ${getKeyword(keywordList, 17, 'goldfish')} swim around, sparkling brightly.`,
+                    `Beautiful ${getKeyword(keywordList, 18, 'butterflies')}, fluttering in the flower bushes.`,
+                    `Hopping like a little ${getKeyword(keywordList, 19, 'bunny')}, full of energy.`,
+                    `The ${getKeyword(keywordList, 20, 'squirrel')} climbing high on the tree, searching for its treasure.`,
+                ],
+                chorus: [
+                    `Hand in hand, walking far away, not afraid of wind or rain, because we are together.`,
+                    `Our story, to be continued, like the ${getKeyword(keywordList, 8, 'little stars', language)}, always shining bright.`,
+                    `Because I have you, right by my side, that's the most beautiful scenery, better than any poem.`,
+                    `This is our melody, simple and sweet, singing it to the whole world.`,
+                    `Cuddling like a little ${getKeyword(keywordList, 15, 'kitten')}, feeling each other's warmth.`,
+                    `Flying freely like a ${getKeyword(keywordList, 8, 'bird')}, carefree and light.`,
+                ],
+                bridge: [
+                    `Maybe there will be times we get lost, but as long as I see your eyes.`,
+                    `All the unease disappears, filled with courage again.`,
+                    `Those past ${getKeyword(keywordList, 9, 'secrets', language)}, have now become beautiful memories.`,
+                    `Thankful for fate bringing us together, creating this miracle.`,
+                    `Loyal like a ${getKeyword(keywordList, 16, 'puppy')}, guarding our friendship.`,
+                    `Chasing dreams like ${getKeyword(keywordList, 18, 'butterflies')}, never giving up.`,
+                ],
+                outro: [
+                    `Forever, forever, together.`,
+                    `Until the end of the world, never apart.`,
+                    `Our song, will keep on singing.`,
+                    `With the courage of love and ${getKeyword(keywordList, 10, 'adventure', language)}.`,
+                    `Like a ${getKeyword(keywordList, 20, 'squirrel')}, collecting every happy moment.`,
+                ]
+            },
+            ja: {
+                verse: [
+                    `小さな${getKeyword(keywordList, 0, '願い', language)}、風に揺れる。`,
+                    `${getKeyword(keywordList, 1, 'キャンディ', language)}みたいに、口の中で溶けて、心まで甘い。`,
+                    `君の${getKeyword(keywordList, 2, '笑顔', language)}が、全てを癒す魔法。`,
+                    `そっと、${getKeyword(keywordList, 3, 'そよ風', language)}が遠い物語を運んでくる。`,
+                    `${getKeyword(keywordList, 4, '花', language)}の香りを運んで、空気に満ちる。`,
+                    `見て、空にかかる${getKeyword(keywordList, 5, '虹', language)}、夢と現実をつなぐ。`,
+                    `${getKeyword(keywordList, 6, '泡', language)}のように、小さな願いを乗せて、そっと遠くへ漂う。`,
+                    `毎日の${getKeyword(keywordList, 7, '晴れた日', language)}、君と太陽の光を分かち合いたい。`,
+                    `聞いて、${getKeyword(keywordList, 8, '鳥', language)}が枝で歌っている、私たちのメロディーを。`,
+                    `心に小さな${getKeyword(keywordList, 9, '秘密', language)}を隠して、夜更けに君だけに話す。`,
+                    `一緒に${getKeyword(keywordList, 10, '冒険', language)}の旅に出かけよう、未知の景色を探しに。`,
+                     `${getKeyword(keywordList, 11, '太陽の光', language)}と${getKeyword(keywordList, 12, '月光', language)}を集めて、小さなバッグいっぱいに。`,
+                    `私たちには小さな${getKeyword(keywordList, 13, '約束', language)}がある、決して忘れない。`,
+                    `${getKeyword(keywordList, 14, '星空', language)}の下で、一番美しい願いを込める。`,
+                    `可愛い${getKeyword(keywordList, 15, '子猫')}が、私の足元にそっとすり寄る。`,
+                    `尻尾を振る${getKeyword(keywordList, 16, '子犬')}が、たくさんの喜びを運んでくる。`,
+                    `池では、${getKeyword(keywordList, 17, '金魚')}が泳ぎ回って、キラキラ光る。`,
+                    `美しい${getKeyword(keywordList, 18, '蝶')}が、花壇でひらひら舞う。`,
+                    `${getKeyword(keywordList, 19, 'ウサギ')}のように跳ねて、元気いっぱい。`,
+                    `${getKeyword(keywordList, 20, 'リス')}が木の上で高く登って、宝物を探している。`,
+                ],
+                 chorus: [
+                    `手をつないで、遠くまで歩こう、風雨も怖くない、だって私たちは一緒だから。`,
+                    `私たちの物語は、まだまだ続く、${getKeyword(keywordList, 8, '小さな星', language)}のように、いつも輝いている。`,
+                    `君がそばにいるから、それが一番美しい景色、どんな詩よりも。`,
+                    `これは私たちのメロディー、シンプルで甘い、世界中に歌おう。`,
+                    `${getKeyword(keywordList, 15, '子猫')}のように寄り添って、お互いの温かさを感じる。`,
+                    `${getKeyword(keywordList, 8, '鳥')}のように自由に飛んで、心配事は何もない。`,
+                ],
+                bridge: [
+                    `迷子になる時もあるかもしれない、でも君の瞳を見れば。`,
+                    `全ての不安は消え去り、再び勇気が満ちる。`,
+                    `あの頃の${getKeyword(keywordList, 9, '秘密', language)}は、今では美しい思い出になった。`,
+                    `運命が出会わせてくれたことに感謝、この奇跡を創り出した。`,
+                    `${getKeyword(keywordList, 16, '子犬')}のように忠実で、私たちの友情を守る。`,
+                    `${getKeyword(keywordList, 18, '蝶')}のような夢を追いかけて、諦めない。`,
+                ],
+                 outro: [
+                    `ずっと、ずっと、一緒に。`,
+                    `世界の果てまで、離れない。`,
+                    `私たちの歌は、歌い続ける。`,
+                    `愛と${getKeyword(keywordList, 10, '冒険', language)}の勇気を持って。`,
+                    `${getKeyword(keywordList, 20, 'リス')}のように、全ての幸せな瞬間を集める。`,
+                ]
+            }
+        };
+
+        const selectedTemplates = lyricTemplates[language];
+        if (!selectedTemplates) {
+            lyricsOutput.value = "请选择一种支持的语言。";
+            return;
+        }
+
+        // 根据选择的长度生成歌词结构
+        let verseLines = 4; // 短歌词主歌行数
+        let chorusLines = 3; // 短歌词副歌行数
+        let bridgeLines = 0;
+        let outroLines = 0;
+        let repeatChorus = 0; // 副歌重复次数
+
+        if (length === 'medium') {
+            verseLines = 4;
+            chorusLines = 3;
+            bridgeLines = 3;
+        } else if (length === 'long') {
+            verseLines = 5;
+            chorusLines = 4;
+            bridgeLines = 3;
+            repeatChorus = 1; // 长歌词多一次副歌
+            outroLines = 3;
+        }
+
+        let structure = [];
+        // 主歌1
+        structure.push(...selectRandomLines(selectedTemplates.verse, verseLines));
+        structure.push(''); // 添加空行分隔
+
+        // 副歌1
+        structure.push(...selectRandomLines(selectedTemplates.chorus, chorusLines));
+        structure.push(''); // 添加空行分隔
+
+        // 主歌2
+        structure.push(...selectRandomLines(selectedTemplates.verse, verseLines));
+        structure.push(''); // 添加空行分隔
+
+        // 副歌2
+        structure.push(...selectRandomLines(selectedTemplates.chorus, chorusLines));
+        structure.push(''); // 添加空行分隔
+
+        // 桥段 (如果需要)
+        if (bridgeLines > 0 && selectedTemplates.bridge && selectedTemplates.bridge.length > 0) {
+             structure.push('（桥段）'); // 标记桥段
+             structure.push(...selectRandomLines(selectedTemplates.bridge, bridgeLines));
+             structure.push(''); // 添加空行分隔
+        }
+
+         // 重复副歌 (如果需要)
+        for(let i = 0; i < repeatChorus; i++) {
+             structure.push(...selectRandomLines(selectedTemplates.chorus, chorusLines));
+             structure.push(''); // 添加空行分隔
+        }
+
+
+        // 结尾 (如果需要)
+        if (outroLines > 0 && selectedTemplates.outro && selectedTemplates.outro.length > 0) {
+             structure.push('（结尾）'); // 标记结尾
+             structure.push(...selectRandomLines(selectedTemplates.outro, outroLines));
+        }
+
+
+        generatedText = structure.join('\n');
+
+
+        lyricsOutput.value = generatedText;
+    }
+
+    // 从模板列表中随机选择指定数量的行
+    function selectRandomLines(templateList, count) {
+        const selectedLines = [];
+        // 确保选择的行数不超过可用模板的数量
+        const numToSelect = Math.min(count, templateList.length);
+
+        // 创建一个包含所有索引的数组
+        const availableIndices = Array.from({ length: templateList.length }, (_, i) => i);
+
+        for (let i = 0; i < numToSelect; i++) {
+            if (availableIndices.length === 0) break; // 没有更多可用的模板了
+
+            // 随机选择一个索引
+            const randomIndex = Math.floor(Math.random() * availableIndices.length);
+            // 从可用索引中移除选中的索引，并获取其值
+            const selectedIndex = availableIndices.splice(randomIndex, 1)[0];
+            // 将选中的歌词行添加到结果列表
+            selectedLines.push(templateList[selectedIndex]);
+        }
+        return selectedLines;
+    }
+
+
+    // 获取关键词，如果不存在或语言不匹配则使用默认值
+    // 假设用户输入的关键词主要基于中文，如果输出语言不是中文，则不使用用户关键词
+    function getKeyword(keywordList, index, defaultValue, selectedLanguage) {
+        // 如果选择的语言是中文，并且用户输入了关键词，则使用用户关键词
+        if (selectedLanguage === 'zh' && keywordList.length > index && keywordList[index].trim() !== '') {
+            return keywordList[index];
+        } else {
+            // 否则，使用默认值
+            return defaultValue;
+        }
+    }
+
+    // 清空歌词输出区域
+    function clearLyrics() {
+        const lyricsOutput = document.getElementById('lyricsOutput');
+        lyricsOutput.value = "";
+    }
+
+    // 复制歌词到剪贴板
+    function copyLyrics() {
+        const lyricsOutput = document.getElementById('lyricsOutput');
+        lyricsOutput.select(); // 选中文本区域的内容
+        lyricsOutput.setSelectionRange(0, 99999); // 兼容移动设备
+        try {
+             document.execCommand("copy"); // 执行复制命令
+             // 使用 alert 替代 messagebox，因为 messagebox 需要额外的库
+             alert("复制成功！歌词已复制到剪贴板。");
+        } catch (err) {
+             alert("复制失败，请手动复制。");
+        }
+
+    }
+</script>
+
+</body>
+</html>
