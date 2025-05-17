@@ -1,4 +1,4 @@
-# sweetnothings
+# Lyric Generator
 Lyric Generator
 This is a web-based application designed to help users generate lyrics based on keywords or ideas they provide.
 
